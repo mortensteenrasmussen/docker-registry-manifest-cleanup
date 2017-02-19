@@ -6,7 +6,7 @@ This script will search your registry and delete all manifests that do not have 
 Docker images can be pulled both via `image:tag` and via `image@digest`. Because of this, if you overwrite an `image:tag` with a different one (e.g., pushing nightly to `whateverimage:latest`) you will still be able to pull the OLD versions of that tag by using `image@digest`. This functionality means the registry garbage collect cannot remove an image because a reference still exists.
 
 ### Isn't this a bug?
-Not really, some people use `image@digest` to make sure they pull the correct container to be certain that they get the right code in their project. Docker DAB files are one example of this.
+Not really, some people use `image@digest` to make sure they pull the correct image to be certain that they get the right code in their project. Docker DAB files are one example of this.
 
 There is; however, some work being done to make an API endpoint to find these 'hidden' manifests quickly. This work is being done in [docker/distribution#2170](https://github.com/docker/distribution/issues/2170) and [docker/distribution#2169](https://github.com/docker/distribution/pull/2169).
 
@@ -43,3 +43,5 @@ docker run -it -v /home/someuser/registry:/registry -e REGISTRY_URL=http://192.1
 
 ## License
 This project is distributed under [Apache License, Version 2.0.](LICENSE)
+
+Copyright © 2017 Morten Steen Rasmussen
