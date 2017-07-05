@@ -20,17 +20,17 @@ if [[ ${REGISTRY_URL} =~ .*\/ ]]; then
 	REGISTRY_URL=${REGISTRY_URL%/}
 fi
 
+#run curl with --insecure?
+if [ "$CURL_INSECURE" == "true" ]; then
+	CURL_INSECURE_ARG=--insecure
+fi
+
 #verify registry url
-curl -fsSm 3 ${REGISTRY_URL}/v2/ > /dev/null
+curl $CURL_INSECURE_ARG -fsSm 3 ${REGISTRY_URL}/v2/ > /dev/null
 REGISTRY_URL_EXIT_CODE=$?
 if [ ! ${REGISTRY_URL_EXIT_CODE} -eq 0 ]; then
 	echo "Could not contact registry at ${REGISTRY_URL} - quitting"
 	exit 1
-fi
-
-#run curl with --insecure?
-if [ "$CURL_INSECURE" == "true" ]; then
-	CURL_INSECURE_ARG=--insecure
 fi
 
 cd ${REPO_DIR}
