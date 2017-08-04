@@ -54,24 +54,26 @@ if [ ${TOTAL_COUNT} -gt 0 ]; then
 	fi
 
 	for manifest in ${MANIFESTS_WITHOUT_TAGS}; do
-		repo=$(find . | grep "_manifests/revisions/sha256/${manifest}/link" | awk -F "_manifest"  '{print $(NF-1)}' | sed 's#^./\(.*\)/#\1#')
-		
-		if [ ${DRY_RUN} ]; then
-			echo "Would have run curl -fsS ${CURL_INSECURE_ARG} -X DELETE ${REGISTRY_URL}/v2/${repo}/manifests/sha256:${manifest} > /dev/null"
-		else
-			curl -fsS ${CURL_INSECURE_ARG} -X DELETE ${REGISTRY_URL}/v2/${repo}/manifests/sha256:${manifest} > /dev/null
-			exit_code=$?
+		repos=$(find . | grep "_manifests/revisions/sha256/${manifest}/link" | awk -F "_manifest"  '{print $(NF-1)}' | sed 's#^./\(.*\)/#\1#')
 
-			if [ ${exit_code} -eq 0 ]; then
-				((CURRENT_COUNT++))
+		for repo in repos; do
+			if [ ${DRY_RUN} ]; then
+				echo "Would have run curl -fsS ${CURL_INSECURE_ARG} -X DELETE ${REGISTRY_URL}/v2/${repo}/manifests/sha256:${manifest} > /dev/null"
 			else
-				((FAILED_COUNT++))
+				curl -fsS ${CURL_INSECURE_ARG} -X DELETE ${REGISTRY_URL}/v2/${repo}/manifests/sha256:${manifest} > /dev/null
+				exit_code=$?
+
+				if [ ${exit_code} -eq 0 ]; then
+					((CURRENT_COUNT++))
+				else
+					((FAILED_COUNT++))
+				fi
 			fi
-		fi
+		done
 	done
-	
+
 	DF_AFTER=$(df -Ph . | awk 'END{print}')
-	
+
 	if [ ${DRY_RUN} ]; then
 		echo "DRY_RUN over"
 	else
