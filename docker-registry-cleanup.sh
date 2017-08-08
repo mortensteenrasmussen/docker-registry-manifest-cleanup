@@ -56,7 +56,7 @@ if [ ${TOTAL_COUNT} -gt 0 ]; then
 	for manifest in ${MANIFESTS_WITHOUT_TAGS}; do
 		repos=$(find . | grep "_manifests/revisions/sha256/${manifest}/link" | awk -F "_manifest"  '{print $(NF-1)}' | sed 's#^./\(.*\)/#\1#')
 
-		for repo in repos; do
+		for repo in $repos; do
 			if [ ${DRY_RUN} ]; then
 				echo "Would have run curl -fsS ${CURL_INSECURE_ARG} -X DELETE ${REGISTRY_URL}/v2/${repo}/manifests/sha256:${manifest} > /dev/null"
 			else
