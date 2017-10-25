@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+FROM alpine:3.6
+RUN apk add --no-cache curl bash
 ADD docker-registry-cleanup.sh /docker-registry-cleanup.sh
 CMD /docker-registry-cleanup.sh
