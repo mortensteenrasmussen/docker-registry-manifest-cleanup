@@ -41,6 +41,7 @@ MANIFESTS_WITHOUT_TAGS=$(comm -23 <(find . -type f -name "link" | grep "_manifes
 CURRENT_COUNT=0
 FAILED_COUNT=0
 TOTAL_COUNT=$(echo ${MANIFESTS_WITHOUT_TAGS} | wc -w | tr -d ' ')
+COUNTER=0
 
 if [ ${TOTAL_COUNT} -gt 0 ]; then
 	DF_BEFORE=$(df -Ph . | awk 'END{print}')
@@ -53,8 +54,12 @@ if [ ${TOTAL_COUNT} -gt 0 ]; then
 		echo
 	fi
 
+	# Caching find result
+	find . > /tmp/find_result.txt
 	for manifest in ${MANIFESTS_WITHOUT_TAGS}; do
-		repos=$(find . | grep "_manifests/revisions/sha256/${manifest}/link" | awk -F "_manifest"  '{print $(NF-1)}' | sed 's#^./\(.*\)/#\1#')
+		((COUNTER++))
+		echo "## Doing $COUNTER / ${TOTAL_COUNT}"
+		repos=$(grep "_manifests/revisions/sha256/${manifest}/link" /tmp/find_result.txt | awk -F "_manifest"  '{print $(NF-1)}' | sed 's#^./\(.*\)/#\1#')
 
 		for repo in $repos; do
 			if [ ${DRY_RUN} ]; then
@@ -71,6 +76,7 @@ if [ ${TOTAL_COUNT} -gt 0 ]; then
 			fi
 		done
 	done
+	rm -f /tmp/find_result.txt
 
 	DF_AFTER=$(df -Ph . | awk 'END{print}')
 
