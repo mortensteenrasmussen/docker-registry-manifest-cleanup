@@ -22,11 +22,19 @@ fi
 
 #run curl with --insecure?
 if [ "$CURL_INSECURE" == "true" ]; then
-	CURL_INSECURE_ARG=--insecure
+	REG_INSECURE_ARG=--insecure
+fi
+
+if [[ $REGISTRY_USERNAME ]]; then
+	REG_USERNAME_ARG="-u ${REGISTRY_USERNAME}"
+fi
+
+if [[ $REGISTRY_PASSWORD ]]; then
+        REG_PASSWORD_ARG="-p ${REGISTRY_PASSWORD}"
 fi
 
 #verify registry url
-curl $CURL_INSECURE_ARG -fsSm 3 ${REGISTRY_URL}/v2/ > /dev/null
+reg ${REG_INSECURE_ARG} ${REG_USERNAME_ARG} ${REG_PASSWORD_ARG} -r ${REGISTRY_URL} ls > /dev/null
 REGISTRY_URL_EXIT_CODE=$?
 if [ ! ${REGISTRY_URL_EXIT_CODE} -eq 0 ]; then
 	echo "Could not contact registry at ${REGISTRY_URL} - quitting"
@@ -63,9 +71,9 @@ if [ ${TOTAL_COUNT} -gt 0 ]; then
 
 		for repo in $repos; do
 			if [ ${DRY_RUN} ]; then
-				echo "Would have run curl -fsS ${CURL_INSECURE_ARG} -X DELETE ${REGISTRY_URL}/v2/${repo}/manifests/sha256:${manifest} > /dev/null"
+				echo "Would have run reg ${REG_INSECURE_ARG} ${REG_USERNAME_ARG} ${REG_PASSWORD_ARG} -r ${REGISTRY_URL} rm ${repo}@sha256:${manifest} > /dev/null"
 			else
-				curl -fsS ${CURL_INSECURE_ARG} -X DELETE ${REGISTRY_URL}/v2/${repo}/manifests/sha256:${manifest} > /dev/null
+				reg ${REG_INSECURE_ARG} ${REG_USERNAME_ARG} ${REG_PASSWORD_ARG} -r ${REGISTRY_URL} rm ${repo}@sha256:${manifest} > /dev/null
 				exit_code=$?
 
 				if [ ${exit_code} -eq 0 ]; then
