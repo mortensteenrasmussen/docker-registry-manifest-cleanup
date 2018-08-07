@@ -4,6 +4,7 @@
 : ${REGISTRY_DIR:=/registry}
 
 REPO_DIR=${REGISTRY_DIR}/docker/registry/v2/repositories
+BLOB_DIR=${REGISTRY_DIR}/docker/registry/v2/blobs
 
 if [ "${DRY_RUN}" == "true" ]; then
 	echo "Running in dry-run mode. Will not make any changes"
@@ -35,8 +36,31 @@ fi
 
 cd ${REPO_DIR}
 
+ALL_MANIFESTS=$(find ${repo_dir} -type f -name "link" | grep "_manifests/revisions/sha256" | \
+                                                grep -v "\/signatures\/sha256\/" | \
+                                                awk -F/ '{print $(NF-1)}' | sort | uniq)
+LINKED_MANIFESTS=$(for f in $(find ${repo_dir} -type f -name "link" | \
+                                grep "_manifests/tags/.*/current/link"); do\
+                                cat ${f} | sed 's/^sha256://g'; echo; \
+                   done | sort | uniq)
+LIST_MANIFESTS=""
 
-MANIFESTS_WITHOUT_TAGS=$(comm -23 <(find . -type f -name "link" | grep "_manifests/revisions/sha256" | grep -v "\/signatures\/sha256\/" | awk -F/ '{print $(NF-1)}' | sort) <(for f in $(find . -type f -name "link" | grep "_manifests/tags/.*/current/link"); do cat ${f} | sed 's/^sha256://g'; echo; done | sort))
+for manifest in ${LINKED_MANIFESTS}; do
+    # check if manifest is a manifest list and add references to real manifest
+    manifest_data=$(cat ${BLOB_DIR}/sha256/${manifest:0:2}/${manifest}/data)
+    manifest_media_type=$(echo ${manifest_data} | jq -r '.mediaType')
+    if [ "${manifest_media_type}" == "application/vnd.docker.distribution.manifest.list.v2+json" ] ; then
+        # we have a manifest list and fetch the referenced manifests
+        additional_manifests=$(echo ${manifest_data} | jq -r '.["manifests"] | .[].digest' | cut -d: -f2)
+        LIST_MANIFESTS=$(printf "%s\n%s\n" ${LIST_MANIFESTS} ${additional_manifests})
+    fi
+done
+
+LIST_MANIFESTS=$(echo "$LIST_MANIFESTS" | sort | uniq)
+
+LINKED_MANIFESTS=$(printf "%s\n%s" "${LINKED_MANIFESTS}" "${LIST_MANIFESTS}")
+
+MANIFESTS_WITHOUT_TAGS=$(comm -23 <(echo "${ALL_MANIFESTS}") <(echo "${LINKED_MANIFESTS}"))
 
 CURRENT_COUNT=0
 FAILED_COUNT=0
