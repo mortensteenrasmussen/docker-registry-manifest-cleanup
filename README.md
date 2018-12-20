@@ -56,6 +56,7 @@ After running this, you should do a garbage collect in the registry to free up t
 
 | Variable name | Required | Description | Example | 
 | --- | --- | --- | --- |
+REGISTRY_STORAGE | Yes | Tells the script to run against S3 | `S3` | 
 REGISTRY_URL | Yes | The URL to the registry | `http://example.com:5000/` | 
 ACCESS_KEY | Yes | The Accesskey to S3 | `XXXXXXGZMXXXXQMAGXXX` |
 SECRET_KEY | Yes | The secret to S3 | `zfXXXXXEbq/JX++XXXAa/Z+ZCXXXXypfOXXXXC/X` |
