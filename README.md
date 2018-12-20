@@ -1,4 +1,9 @@
 # Docker Registry(v2) Manifest Cleanup
+## Update note
+<aside class="warning">
+Some variable names have changed, please check the documentation below if your script stopped working.
+</aside>
+
 ## About
 This script will search your registry and delete all manifests that do not have any tags associated. Deletion happens through the docker-registry API and should, therefore, be reasonably safe. After running this, you should do a garbage collect in the registry to free up the disk space.
 
