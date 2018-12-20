@@ -21,7 +21,7 @@ See the *examples* below if needed.
 After running this, you should do a garbage collect in the registry to free up the disk space.
 
 | Variable name | Required | Description | Example | 
-| --- | --- | --- | --- | --- |
+| --- | --- | --- | --- |
 REGISTRY_URL | Yes | The URL to the registry | `http://example.com:5000/` | 
 REGISTRY_DIR | No | The path to the registry dir - not needed if using the docker container and mounting in the dir in /registry (see examples) | `/registry` |
 SELF_SIGNED_CERT | No | Set this if using a self-signed cert | `true` |
@@ -50,7 +50,7 @@ See the *examples* below if needed.
 After running this, you should do a garbage collect in the registry to free up the disk space.
 
 | Variable name | Required | Description | Example | 
-| --- | --- | --- | --- | --- |
+| --- | --- | --- | --- |
 REGISTRY_URL | Yes | The URL to the registry | `http://example.com:5000/` | 
 ACCESS_KEY | Yes | The Accesskey to S3 | `XXXXXXGZMXXXXQMAGXXX` |
 SECRET_KEY | Yes | The secret to S3 | `zfXXXXXEbq/JX++XXXAa/Z+ZCXXXXypfOXXXXC/X` |
