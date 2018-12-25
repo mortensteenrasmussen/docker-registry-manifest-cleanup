@@ -21,7 +21,7 @@ This repo is meant as a workaround until we have the necessary tooling in Docker
 
 ## Usage
 ### Running against local storage
-See the *examples* below if needed.
+See the *examples* below if needed. Deletion needs to be enabled in your registry. See [the Docker documentation](https://docs.docker.com/registry/configuration/#delete)
 
 After running this, you should do a garbage collect in the registry to free up the disk space.
 
@@ -82,6 +82,13 @@ With more options:
 ```
 docker run -it -e REGISTRY_URL=http://192.168.77.88:5000 -e REGISTRY_STORAGE="S3" -e ACCESS_KEY="XXXXXXGZMXXXXQMAGXXX" -e SECRET_KEY="zfXXXXXEbq/JX++XXXAa/Z+ZCXXXXypfOXXXXC/X" -e BUCKET="registry-bucket-1" -e REGION="eu-central-1" -e SELF_SIGNED_CERT="true" -e REGISTRY_AUTH="myuser:sickpassword" mortensrasmussen/docker-registry-manifest-cleanup
 ```
+
+### Running against Harbor and other baerer token-based authentication forms
+The run should be the same, the only requirement is that the `user:pass` you provide should have full access to all repositories (and/or projects), since it needs to be able to delete manifests whereever its needed.
+
+When running against Harbor, use a user that's in all projects as a project admin. When the run is finished, you can run the garbage collection through the Harbor UI.
+
+This has been tested working in Harbor 1.7.0.
 
 ## License
 This project is distributed under [Apache License, Version 2.0.](LICENSE)

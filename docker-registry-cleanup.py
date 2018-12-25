@@ -57,11 +57,25 @@ if "SELF_SIGNED_CERT" in os.environ:
 else:
 	cert_verify = True
 
+token_authentication = False
+token_auth_details = {}
 # Check connection to registry
 try:
 	r = requests.get("%s/v2/" % (registry_url), auth=registry_auth, verify=cert_verify)
 	if r.status_code == 401:
-		exit_with_error("Got an authentication error connecting to the registry. Check credentials, or add REGISTRY_AUTH='username:password'")
+		if "Www-Authenticate" in r.headers and "Bearer" in r.headers["Www-Authenticate"]:
+			#We have token based auth, try it
+			auth_header = r.headers["Www-Authenticate"].split(" ")[1]
+			token_authentication = True
+			token_auth_details = dict(s.split("=", 1) for s in re.sub('"',"",auth_header).split(","))
+			r2 = requests.get("%s?service=%s&scope=" % (token_auth_details["realm"],token_auth_details["service"]), auth=registry_auth, verify=cert_verify)
+			if r2.status_code == 401:
+				exit_with_error("Got an authentication error connecting to the registry - even with token authentication. Check credentials, or add REGISTRY_AUTH='username:password'")
+			else:
+				auth_token = r2.json()["token"]
+				registry_headers = {"Authorization": "Bearer %s" % (auth_token)}
+		else:
+			exit_with_error("Got an authentication error connecting to the registry. Check credentials, or add REGISTRY_AUTH='username:password'")
 except requests.exceptions.SSLError as e:
 	exit_with_error("Got an SSLError connecting to the registry. Might be a self signed cert, please set SELF_SIGNED_CERT=true")
 except requests.exceptions.RequestException as e:
@@ -157,7 +171,14 @@ else:
 			if dry_run_mode:
 				print("DRY_RUN: Would have run an HTTP DELETE request to %s/v2/%s/manifests/sha256:%s" % (registry_url, repo, manifest))
 			else:
-				r = requests.delete("%s/v2/%s/manifests/sha256:%s" % (registry_url, repo, manifest), auth=registry_auth, verify=cert_verify)
+				if token_authentication:
+					r2 = requests.get("%s?service=%s&scope=repository:%s:*" % (token_auth_details["realm"],token_auth_details["service"],repo), auth=registry_auth, verify=cert_verify)
+					auth_token = r2.json()["token"]
+					registry_headers = {"Authorization": "Bearer %s" % (auth_token)}
+					r = requests.delete("%s/v2/%s/manifests/sha256:%s" % (registry_url, repo, manifest), verify=cert_verify, headers=registry_headers)
+				else:
+					r = requests.delete("%s/v2/%s/manifests/sha256:%s" % (registry_url, repo, manifest), auth=registry_auth, verify=cert_verify)
+
 				if r.status_code == 202:
 					cleaned_count += 1
 				else:
