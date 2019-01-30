@@ -116,6 +116,7 @@ for filename in file_list:
 
 #fetch linked_manifest_files
 for filename in linked_manifest_files:
+	error = False
 	if storage_on_s3:
 		k = Key(bucket)
 		k.key = filename
@@ -125,20 +126,31 @@ for filename in linked_manifest_files:
 
 		#Get the manifest json to check if its a manifest list
 		k.key = "%s/sha256/%s/%s/data" % (blob_dir, shasum[0:2], shasum)
-		manifest = json.loads(k.get_contents_as_string().decode())
+		try:
+			manifest = json.loads(k.get_contents_as_string().decode())
+		except OSError as e:
+			error = True
+			print(e)
 
 	else:
 		shasum = open(filename, 'r').read().split(":")[1]
-		manifest = json.loads(open("%s/sha256/%s/%s/data" % (blob_dir, shasum[0:2], shasum)).read())
+		try:
+			manifest = json.loads(open("%s/sha256/%s/%s/data" % (blob_dir, shasum[0:2], shasum)).read())
+		except OSError as e:
+			error = True
+			print(e)
 
-	manifest_media_type = manifest["mediaType"]
-	
-	if manifest_media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
-		#add all manifests from manifest list
-		for mf in manifest["manifests"]:
-			linked_manifests.add(mf["digest"])
-	else:
+	if error:
 		linked_manifests.add(shasum)
+	else:
+		manifest_media_type = manifest["mediaType"]
+
+		if manifest_media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
+			#add all manifests from manifest list
+			for mf in manifest["manifests"]:
+				linked_manifests.add(mf["digest"])
+		else:
+			linked_manifests.add(shasum)
 
 unused_manifests = all_manifests - linked_manifests
 
