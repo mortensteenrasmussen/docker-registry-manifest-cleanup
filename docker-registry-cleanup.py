@@ -128,7 +128,7 @@ for filename in linked_manifest_files:
 		k.key = "%s/sha256/%s/%s/data" % (blob_dir, shasum[0:2], shasum)
 		try:
 			manifest = json.loads(k.get_contents_as_string().decode())
-		except OSError as e:
+		except Exception as e:
 			error = True
 			print(e)
 
@@ -136,7 +136,7 @@ for filename in linked_manifest_files:
 		shasum = open(filename, 'r').read().split(":")[1]
 		try:
 			manifest = json.loads(open("%s/sha256/%s/%s/data" % (blob_dir, shasum[0:2], shasum)).read())
-		except OSError as e:
+		except Exception as e:
 			error = True
 			print(e)
 
