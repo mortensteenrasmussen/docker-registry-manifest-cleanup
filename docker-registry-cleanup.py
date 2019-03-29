@@ -129,7 +129,11 @@ for filename in linked_manifest_files:
 
 	else:
 		shasum = open(filename, 'r').read().split(":")[1]
-		manifest = json.loads(open("%s/sha256/%s/%s/data" % (blob_dir, shasum[0:2], shasum)).read())
+		manifest_file = "%s/sha256/%s/%s/data" % (blob_dir, shasum[0:2], shasum)
+		if not os.path.exists(manifest_file):
+			print("Missing manifest %s referenced by %s, skipping" % (manifest_file, filename))
+			continue
+		manifest = json.loads(open(manifest_file).read())
 
 	manifest_media_type = manifest["mediaType"]
 	
