@@ -130,7 +130,7 @@ for filename in linked_manifest_files:
 			manifest = json.loads(k.get_contents_as_string().decode())
 		except Exception as e:
 			error = True
-			print(e)
+			print("Caught error trying to read manifest, ignoring.")
 
 	else:
 		shasum = open(filename, 'r').read().split(":")[1]
@@ -138,7 +138,7 @@ for filename in linked_manifest_files:
 			manifest = json.loads(open("%s/sha256/%s/%s/data" % (blob_dir, shasum[0:2], shasum)).read())
 		except Exception as e:
 			error = True
-			print(e)
+			print("Caught error trying to read manifest, ignoring.")
 
 	if error:
 		linked_manifests.add(shasum)
