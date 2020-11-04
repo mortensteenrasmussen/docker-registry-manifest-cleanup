@@ -1,4 +1,9 @@
 # Docker Registry(v2) Manifest Cleanup
+## Update note
+<aside class="warning">
+Some variable names have changed, please check the documentation below if your script stopped working.
+</aside>
+
 ## About
 This script will search your registry and delete all manifests that do not have any tags associated. Deletion happens through the docker-registry API and should, therefore, be reasonably safe. After running this, you should do a garbage collect in the registry to free up the disk space.
 
@@ -15,33 +20,77 @@ A feature request to be able to explicitly garbage collect untagged manifests is
 This repo is meant as a workaround until we have the necessary tooling in Docker and registry to handle this without 3rd party tools.
 
 ## Usage
-Replace the `<path-to-registry>` and `<registry-url>` in the below commands. See the *example* below if needed.
-
-To do a dry-run, add `-e DRY_RUN=true`.
+### Running against local storage
+See the *examples* below if needed. Deletion needs to be enabled in your registry. See [the Docker documentation](https://docs.docker.com/registry/configuration/#delete)
 
 After running this, you should do a garbage collect in the registry to free up the disk space.
 
-#### For a normal http registry:
+| Variable name | Required | Description | Example | 
+| --- | --- | --- | --- |
+REGISTRY_URL | Yes | The URL to the registry | `http://example.com:5000/` | 
+REGISTRY_DIR | No | The path to the registry dir - not needed if using the docker container and mounting in the dir in /registry (see examples) | `/registry` |
+SELF_SIGNED_CERT | No | Set this if using a self-signed cert | `true` |
+REGISTRY_AUTH | No | Set this when using http basic auth | `username:password` |
+DRY_RUN | No | Set this to do a dry-run (e.g. don't delete anything, just show what would be done) | `true` |
+
+#### Examples of running against local storage:
+Simplest way:
 ```
-docker run -it -v <path-to-registry>:/registry -e REGISTRY_URL=<registry-url> mortensrasmussen/docker-registry-manifest-cleanup
+docker run -it -v /home/someuser/registry:/registry -e REGISTRY_URL=http://192.168.77.88:5000 mortensrasmussen/docker-registry-manifest-cleanup
 ```
 
-#### For an https registry with self-signed certificates:
+To test it without changing anything in your registry:
 ```
-docker run -it -v <path-to-registry>:/registry -e REGISTRY_URL=<registry-url> -e CURL_INSECURE=true mortensrasmussen/docker-registry-manifest-cleanup
-```
-
-#### Dry-run
-```
-docker run -it -v <path-to-registry>:/registry -e REGISTRY_URL=<registry-url> -e DRY_RUN=true mortensrasmussen/docker-registry-manifest-cleanup
+docker run -it -v /home/someuser/registry:/registry -e REGISTRY_URL=http://192.168.77.88:5000 -e DRY_RUN="true" mortensrasmussen/docker-registry-manifest-cleanup
 ```
 
-#### Example:
+With more options:
 ```
-docker run -it -v /home/someuser/registry:/registry -e REGISTRY_URL=http://192.168.50.87:5000 mortensrasmussen/docker-registry-manifest-cleanup
+docker run -it -v /home/someuser/registry:/registry -e REGISTRY_URL=http://192.168.77.88:5000 -e SELF_SIGNED_CERT="true" -e REGISTRY_AUTH="myuser:sickpassword" mortensrasmussen/docker-registry-manifest-cleanup
 ```
+
+### Running against S3 storage
+See the *examples* below if needed.
+
+After running this, you should do a garbage collect in the registry to free up the disk space.
+
+| Variable name | Required | Description | Example | 
+| --- | --- | --- | --- |
+REGISTRY_STORAGE | Yes | Tells the script to run against S3 | `S3` | 
+REGISTRY_URL | Yes | The URL to the registry | `http://example.com:5000/` | 
+ACCESS_KEY | Yes | The Accesskey to S3 | `XXXXXXGZMXXXXQMAGXXX` |
+SECRET_KEY | Yes | The secret to S3 | `zfXXXXXEbq/JX++XXXAa/Z+ZCXXXXypfOXXXXC/X` |
+BUCKET | Yes | The name of the bucket | `registry-bucket-1` |
+REGION | Yes | The region in which the bucket is located | `eu-central-1` | 
+REGISTRY_DIR | No | Only needed if registry is not in the root folder of the bucket | `/path/to/registry` |
+SELF_SIGNED_CERT | No | Set this if using a self-signed cert | `true` |
+REGISTRY_AUTH | No | Set this when using http basic auth | `username:password` |
+DRY_RUN | No | Set this to do a dry-run (e.g. don't delete anything, just show what would be done) | `true` | 
+
+#### Examples of running against S3 storage
+Simplest way:
+```
+docker run -it -e REGISTRY_URL=http://192.168.77.88:5000 -e REGISTRY_STORAGE="S3" -e ACCESS_KEY="XXXXXXGZMXXXXQMAGXXX" -e SECRET_KEY="zfXXXXXEbq/JX++XXXAa/Z+ZCXXXXypfOXXXXC/X" -e BUCKET="registry-bucket-1" -e REGION="eu-central-1" mortensrasmussen/docker-registry-manifest-cleanup
+```
+
+To test it without changing anything in your registry:
+```
+docker run -it -e DRY_RUN="true" -e REGISTRY_URL=http://192.168.77.88:5000 -e REGISTRY_STORAGE="S3" -e ACCESS_KEY="XXXXXXGZMXXXXQMAGXXX" -e SECRET_KEY="zfXXXXXEbq/JX++XXXAa/Z+ZCXXXXypfOXXXXC/X" -e BUCKET="registry-bucket-1" -e REGION="eu-central-1" mortensrasmussen/docker-registry-manifest-cleanup
+```
+
+With more options:
+```
+docker run -it -e REGISTRY_URL=http://192.168.77.88:5000 -e REGISTRY_STORAGE="S3" -e ACCESS_KEY="XXXXXXGZMXXXXQMAGXXX" -e SECRET_KEY="zfXXXXXEbq/JX++XXXAa/Z+ZCXXXXypfOXXXXC/X" -e BUCKET="registry-bucket-1" -e REGION="eu-central-1" -e SELF_SIGNED_CERT="true" -e REGISTRY_AUTH="myuser:sickpassword" mortensrasmussen/docker-registry-manifest-cleanup
+```
+
+### Running against Harbor and other baerer token-based authentication forms
+The run should be the same, the only requirement is that the `user:pass` you provide should have full access to all repositories (and/or projects), since it needs to be able to delete manifests whereever its needed.
+
+When running against Harbor, use a user that's in all projects as a project admin. When the run is finished, you can run the garbage collection through the Harbor UI.
+
+This has been tested working in Harbor 1.7.0.
 
 ## License
 This project is distributed under [Apache License, Version 2.0.](LICENSE)
 
-Copyright © 2017 Morten Steen Rasmussen
+Copyright © 2018 Morten Steen Rasmussen
