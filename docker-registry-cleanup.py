@@ -140,17 +140,14 @@ for filename in linked_manifest_files:
 			error = True
 			print("Caught error trying to read manifest, ignoring.")
 
-	if error:
-		linked_manifests.add(shasum)
-	else:
+	if not error:
 		manifest_media_type = manifest["mediaType"]
 
 		if manifest_media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
 			#add all manifests from manifest list
 			for mf in manifest["manifests"]:
 				linked_manifests.add(mf["digest"].split(":")[1])
-		else:
-			linked_manifests.add(shasum)
+	linked_manifests.add(shasum)
 
 unused_manifests = all_manifests - linked_manifests
 
